@@ -10,10 +10,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const app_1 = require("./app");
+const PORT = 8000;
 function startApolloStart() {
     return __awaiter(this, void 0, void 0, function* () {
         const app = yield (0, app_1.init)();
-        app.listen(8000, () => console.log(`Server Listening at Port 8000`));
+        app.listen(PORT, () => console.log(`Server Listening at Port ${PORT}`));
     });
 }
 startApolloStart();

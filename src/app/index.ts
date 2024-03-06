@@ -5,13 +5,15 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import express from 'express';
 import { User } from './user';
+import { GraphqlContext } from '../interfaces';
+import { JWTService } from '../services/jwt';
 
 
 
 export async function init(){
-    const app= express();
+    const app = express();
     app.use(bodyParser.json())
-    app.use(cors);
+    app.use(cors());
 
     // prismaClient.user.count({
     //     //@ts-ignore
@@ -21,15 +23,13 @@ export async function init(){
 
 
 
-    const server =new ApolloServer({
-        //give schemas
+    const server =new ApolloServer<GraphqlContext>({
         typeDefs:`
         ${User.types}
         type Query{
             ${User.queries}
         }
         `,
-        //solve the schemas
         resolvers:{
             Query:{
                ...User.resolvers.queries,
@@ -38,7 +38,15 @@ export async function init(){
         }
     })
     await server.start();
-    app.use('/graphql',expressMiddleware(server))
+    console.log("After Starting Server")
+    app.use('/graphql',expressMiddleware(server,{
+        context: async({req,res})=>{
+            return{
+                user: req.headers.authorization? JWTService.decodeToken(req.headers.authorization.split("Bearer ")[1]) : undefined
+
+            }
+        }
+    }))
     return app;
 
 }

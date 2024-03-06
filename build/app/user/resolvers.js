@@ -19,14 +19,16 @@ const jwt_1 = require("../../services/jwt");
 exports.queries = {
     verifyGoogleToken: (parent, { token }) => __awaiter(void 0, void 0, void 0, function* () {
         try {
+            console.log("Inside");
             const googleToken = token;
             const googleOauthURL = new URL('https://oauth2.googleapis.com/tokeninfo');
             googleOauthURL.searchParams.set('id_token', googleToken);
-            /* ------------------------------OR---------------------- */
+            /* ------------------------------OR------------------------------------------------- */
             // const googleOauthURL=`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`
             const { data } = yield axios_1.default.get(googleOauthURL.toString(), {
                 responseType: 'json',
             });
+            console.log("data", data);
             const user = yield db_1.prismaClient.user.findUnique({ where: { email: data.email } });
             if (!user) {
                 yield db_1.prismaClient.user.create({
@@ -48,9 +50,20 @@ exports.queries = {
         }
         catch (error) {
             // Handle errors appropriately
-            //   console.error('Error in verifyGoogleToken resolver:', error);
+            console.error('Error in verifyGoogleToken resolver:', error);
             throw new Error('Internal Server Error');
         }
     }),
+    getCurrentUser: (parent, args, ctx) => __awaiter(void 0, void 0, void 0, function* () {
+        var _a;
+        console.log(ctx);
+        const id = (_a = ctx.user) === null || _a === void 0 ? void 0 : _a.id;
+        if (!id) {
+            return null;
+        }
+        const user = yield db_1.prismaClient.user.findUnique({ where: { id } });
+        console.log("user", user);
+        return user;
+    })
 };
 exports.resolvers = { queries: exports.queries };

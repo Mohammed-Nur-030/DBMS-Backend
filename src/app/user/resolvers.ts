@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { prismaClient } from '../../clients/db';
 import { JWTService } from '../../services/jwt';
+import { GraphqlContext } from '../../interfaces';
 
 interface GoogleTokenResult {
   iss?: string;
@@ -26,15 +27,18 @@ interface GoogleTokenResult {
 export const queries = {
   verifyGoogleToken: async (parent: any, { token }: { token: string }) => {
     try {
-      const googleToken = token;
+      console.log("Inside")
+      const googleToken = token; 
       const googleOauthURL = new URL('https://oauth2.googleapis.com/tokeninfo');
       googleOauthURL.searchParams.set('id_token', googleToken);
-    /* ------------------------------OR---------------------- */
+    /* ------------------------------OR------------------------------------------------- */
       // const googleOauthURL=`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`
 
       const { data } = await axios.get<GoogleTokenResult>(googleOauthURL.toString(), {
         responseType: 'json',
       });
+
+      console.log("data",data)
 
       const user = await prismaClient.user.findUnique({ where: { email: data.email } });
 
@@ -61,10 +65,20 @@ export const queries = {
       return userToken;
     } catch (error) {
       // Handle errors appropriately
-    //   console.error('Error in verifyGoogleToken resolver:', error);
+      console.error('Error in verifyGoogleToken resolver:', error);
       throw new Error('Internal Server Error');
     }
   },
+  getCurrentUser:async(parent:any,args:any,ctx:GraphqlContext)=>{
+    console.log(ctx)
+    const id=ctx.user?.id;
+    if(!id){
+      return null
+    }
+    const user=await prismaClient.user.findUnique({where:{id} })
+    console.log("user",user)
+    return user;
+  }
 };
 
 export const resolvers = { queries };
