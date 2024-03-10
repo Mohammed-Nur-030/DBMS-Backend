@@ -9,7 +9,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const dotenv = require('dotenv');
 const app_1 = require("./app");
+dotenv.config();
 const PORT = 8000;
 function startApolloStart() {
     return __awaiter(this, void 0, void 0, function* () {
