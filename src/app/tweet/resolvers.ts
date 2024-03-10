@@ -49,6 +49,10 @@ const mutations = {
         if (!ctx.user) {
             throw new Error('You Are not Authenticated')
         }
+        const rateLimitFlag=await redisClient.get(`RATE_LIMIT:TWEET:${ctx.user.id}`)
+
+        if(rateLimitFlag) throw new Error("Please Wait...")
+        
         const tweet = await prismaClient.tweet.create({
             data: {
                 content: payload.content,
@@ -56,7 +60,7 @@ const mutations = {
                 author: { connect: { id: ctx.user.id } }
             }
         })
-
+        await redisClient.setex(`RATE_LIMIT:TWEET:${ctx.user.id}`,10,1)
         await redisClient.del(`ALL_TWEETS`);
         return tweet
 
