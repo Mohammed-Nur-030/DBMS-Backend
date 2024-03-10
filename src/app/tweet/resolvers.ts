@@ -3,6 +3,7 @@ import { prismaClient } from "../../clients/db";
 import { GraphqlContext } from "../../interfaces";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
+import { redisClient } from "../../clients/redis";
 
 
 interface CreateTweetPayload {
@@ -17,7 +18,14 @@ const s3Client = new S3Client({
 
 
 const queries = {
-    getAllTweets: () => prismaClient.tweet.findMany({ orderBy: { createdAt: "desc" } }),
+    getAllTweets: async() =>{
+        const cachedTweets=await redisClient.get(`ALL_TWEETS`);
+        if(cachedTweets) return JSON.parse(cachedTweets)
+
+        const tweets= await prismaClient.tweet.findMany({ orderBy: { createdAt: "desc" } })
+         await redisClient.set('ALL_TWEETS',JSON.stringify(tweets))
+         return tweets
+        },
     getSignedUrlForTweet: async (parent: any,
         { imageType,imageName }: { imageType: string , imageName: string},
         ctx: GraphqlContext) => {
@@ -48,6 +56,8 @@ const mutations = {
                 author: { connect: { id: ctx.user.id } }
             }
         })
+
+        await redisClient.del(`ALL_TWEETS`);
         return tweet
 
     }
